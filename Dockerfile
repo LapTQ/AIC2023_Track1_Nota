@@ -1,31 +1,31 @@
-FROM nvidia/cuda:11.4.0-cudnn8-devel-ubuntu20.04
+FROM ubuntu:20.04 as backend
 
-ENV DEBIAN_FRONTEND=noninteractive 
+SHELL ["/bin/bash", "-c"]
 
-RUN apt-get update
-RUN apt-get install -y tzdata
-RUN apt-get install -y sudo
-RUN sudo apt update
-RUN sudo apt install -y software-properties-common
-RUN sudo add-apt-repository -y ppa:deadsnakes/ppa
-RUN sudo apt install -y python3.9
-RUN sudo apt-get install -y python3-pip
+RUN apt-get update -y
+RUN apt-get upgrade -y
+RUN ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && echo $CONTAINER_TIMEZONE > /etc/timezone
+RUN apt update
 
-RUN pip3 install torch==1.10.1+cu111 torchvision==0.11.2+cu111 torchaudio==0.10.1 -f https://download.pytorch.org/whl/torch_stable.html
-RUN apt-get install -y libgl1-mesa-glx ffmpeg
+RUN apt install libgtk2.0-dev pkg-config -y
+RUN apt-get purge libopencv* && apt install libopencv* -y
+RUN apt install x11-apps -y
+RUN apt install wget -y
+RUN apt install nano -y
+RUN apt install git -y
+RUN apt-get install python3-tk -y
+RUN apt install tmux -y
+RUN apt install zip unzip -y
 
-RUN pip3 install Cython
-Run pip3 install cython-bbox
+# install pip
+RUN apt install python3-pip -y
+RUN pip3 install --upgrade pip
 
-RUN pip3 install -U openmim
-RUN mim install mmengine && \
-    mim install "mmcv>=2.0.0" && \
-    mim install "mmdet>=3.0.0"
+# install python packages
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt --default-timeout=10000 --ignore-installed
 
 RUN pip3 install lap \
-    ultralytics \
-    mmpose \
-    fastreid \
-    opencv-python==4.5.5.64 \
-    opencv-python-headless==4.5.5.64 \
-    numpy==1.23.0
+    fastreid
+
+WORKDIR /workspace/AIC2023_Track1_Nota
